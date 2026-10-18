@@ -1,0 +1,29 @@
+name: Bug report
+description: Report a problem with finding items or rendering highlights.
+body:
+  - type: input
+    id: versions
+    attributes:
+      label: Versions
+      description: Mod version, Minecraft version, Forge version, and EMI version if installed.
+    validations:
+      required: true
+  - type: input
+    id: container
+    attributes:
+      label: Container and environment
+      description: Container type/mod; singleplayer or multiplayer; relevant renderer/shader mods.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps and expected/actual behavior
+      description: Include whether the container was opened before searching and whether the search had expired.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Screenshots or relevant log excerpt
+      description: Remove private server addresses, chat, and account information before sharing logs.

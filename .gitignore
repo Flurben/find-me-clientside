@@ -1,0 +1,13 @@
+.gradle/
+build/
+run/
+run-server/
+.reference/
+.idea/
+*.iml
+.vscode/
+logs/
+dist/
+.env
+.env.*
+*.hprof

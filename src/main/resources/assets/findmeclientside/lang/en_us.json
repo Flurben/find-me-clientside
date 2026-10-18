@@ -1,0 +1,14 @@
+{
+  "key.categories.findmeclientside": "Find Me Clientside",
+  "key.findmeclientside.search": "Find hovered / held item",
+  "key.findmeclientside.clear": "Clear search highlights",
+  "findmeclientside.found": "%s: %s remembered locations, %s items last seen",
+  "findmeclientside.no_matches": "No remembered %s within %s blocks",
+  "findmeclientside.hint": "Open containers first to remember them. Contents may change while closed.",
+  "findmeclientside.slot_hint": "Open a container to highlight matching item slots.",
+  "findmeclientside.alternatives": "any of %s items",
+  "findmeclientside.select_item": "Hold an item, or hover an inventory / EMI item and press your Find key.",
+  "findmeclientside.command_help": "Find Me Clientside: /findmeclient stats | /findmeclient clear (erase this world's cache)",
+  "findmeclientside.stats": "Remembered containers: %s · integration: %s · radius: %s blocks",
+  "findmeclientside.cleared": "Cleared this server / world's remembered containers. Reopen containers to remember them."
+}

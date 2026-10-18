@@ -1,0 +1,9 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "dev.findmeclientside.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "refmap": "findmeclientside.refmap.json",
+  "client": ["ContainerContentsMixin"],
+  "injectors": {"defaultRequire": 1}
+}

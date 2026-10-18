@@ -1,0 +1,15 @@
+{
+  "project_id": null,
+  "name": "Find Me Clientside 1.0.2 - Forge 1.20.1",
+  "version_number": "1.0.2",
+  "version_type": "beta",
+  "game_versions": ["1.20.1"],
+  "loaders": ["forge"],
+  "environment": "client_only",
+  "featured": true,
+  "status": "listed",
+  "dependencies": [{"project_id": "fRiHVvU7", "dependency_type": "optional"}],
+  "file_parts": ["file"],
+  "primary_file": "file",
+  "changelog": ""
+}

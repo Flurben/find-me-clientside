@@ -1,0 +1,30 @@
+name: Prepare draft GitHub release
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Assemble release package
+        shell: pwsh
+        run: |
+          chmod +x gradlew
+          ./scripts/Build-Release.ps1
+      - name: Create draft beta release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          VERSION=$(sed -n 's/^mod_version=//p' gradle.properties | tr -d '\r')
+          gh release create "v${VERSION}" build/libs/*.jar dist/*.zip dist/SHA256SUMS.txt \
+            --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --draft --prerelease \
+            --title "Find Me Clientside ${VERSION} - Forge 1.20.1" \
+            --notes-file publishing/release-notes.md
