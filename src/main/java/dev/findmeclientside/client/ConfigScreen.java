@@ -33,16 +33,20 @@ public final class ConfigScreen extends Screen {
                 range("highlightSeconds", ClientConfig.HIGHLIGHT_SECONDS),
                 toggle("matchNbt", ClientConfig.MATCH_NBT),
                 toggle("closeScreenOnSuccess", ClientConfig.CLOSE_SCREEN),
+                toggle("loadedInventories", ClientConfig.LOADED_INVENTORIES),
                 toggle("persist", ClientConfig.PERSIST_CACHE),
                 range("maxContainers", ClientConfig.MAX_CONTAINERS),
                 range("maxAgeDays", ClientConfig.MAX_AGE_DAYS)});
         list.addBig(percent("hudScale", ClientConfig.HUD_SCALE));
         list.addSmall(percent("hudX", ClientConfig.HUD_X), percent("hudY", ClientConfig.HUD_Y));
-        preview = List.of(Component.translatable("findmeclientside.found",
-                new ItemStack(Items.DIAMOND).getHoverName(), 64, 3).getString());
+        preview = List.of(Component.translatable("findmeclientside.found", new ItemStack(Items.DIAMOND).getHoverName(),
+                Component.translatable("findmeclientside.part.containers",
+                        Component.translatable("findmeclientside.amount.items", 64), 3)).getString());
         addWidget(list);
+        addRenderableWidget(Button.builder(Component.translatable("findmeclientside.blacklist.open"),
+                button -> minecraft.setScreen(new BlacklistScreen(this))).bounds(width / 2 - 155, height - 27, 150, 20).build());
         addRenderableWidget(Button.builder(CommonComponents.GUI_DONE, button -> onClose())
-                .bounds(width / 2 - 100, height - 27, 200, 20).build());
+                .bounds(width / 2 + 5, height - 27, 150, 20).build());
     }
 
     @Override

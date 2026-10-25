@@ -45,9 +45,10 @@ public final class ContainerCache {
 
     public List<RememberedContainer> search(String dimension, double x, double y, double z,
                                            double radius, List<ItemSnapshot> queries, boolean matchNbt) {
+        QuerySet querySet = new QuerySet(queries);
         return containers.values().stream().filter(c -> c.dimension().equals(dimension))
                 .filter(c -> c.withinRadius(x, y, z, radius))
-                .filter(c -> c.matchingCount(queries, matchNbt) > 0)
+                .filter(c -> c.matchingCount(querySet, matchNbt) > 0)
                 .toList();
     }
 

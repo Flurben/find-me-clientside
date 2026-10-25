@@ -50,19 +50,18 @@ public final class HighlightRenderer {
         // AFTER_PARTICLES supplies the same camera rotation used for blocks and block entities.
         if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_PARTICLES) return;
         Minecraft mc = Minecraft.getInstance();
-        var matches = SearchController.matches();
-        if (matches.isEmpty() || mc.options.hideGui) return;
+        var highlights = SearchController.highlights();
+        if (highlights.isEmpty() || mc.options.hideGui) return;
         PoseStack pose = event.getPoseStack();
         Vec3 camera = event.getCamera().getPosition();
         pose.pushPose();
         VertexConsumer buffer = BUFFERS.getBuffer(Types.HIGHLIGHT);
         float pulse = 0.65f + 0.25f * (float) Math.sin(System.currentTimeMillis() / 180.0);
-        for (int i = 0; i < Math.min(matches.size(), 256); i++) {
-            for (var anchor : matches.get(i).anchors()) {
-                AABB box = new AABB(ContainerTracker.position(anchor)).inflate(0.015)
-                        .move(-camera.x, -camera.y, -camera.z);
-                LevelRenderer.renderLineBox(pose, buffer, box, 0.15f, 0.9f, 1.0f, pulse);
-            }
+        for (var highlight : highlights) {
+            int color = highlight.color();
+            AABB box = new AABB(highlight.pos()).inflate(0.015).move(-camera.x, -camera.y, -camera.z);
+            LevelRenderer.renderLineBox(pose, buffer, box, (color >> 16 & 0xFF) / 255f,
+                    (color >> 8 & 0xFF) / 255f, (color & 0xFF) / 255f, pulse);
         }
         BUFFERS.endBatch(Types.HIGHLIGHT);
         pose.popPose();

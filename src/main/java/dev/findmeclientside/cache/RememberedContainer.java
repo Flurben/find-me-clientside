@@ -21,8 +21,20 @@ public record RememberedContainer(String dimension, String title, String kind,
     }
 
     public long matchingCount(List<ItemSnapshot> queries, boolean matchNbt) {
-        return items.stream().filter(item -> queries.stream().anyMatch(q -> item.matches(q, matchNbt)))
-                .mapToLong(ItemSnapshot::count).sum();
+        return matchingCount(new QuerySet(queries), matchNbt);
+    }
+
+    public long matchingCount(QuerySet queries, boolean matchNbt) {
+        long total = 0;
+        for (ItemSnapshot item : items) if (queries.matches(item, matchNbt)) total += item.count();
+        return total;
+    }
+
+    /** Matching item count, or matching fluid amount in mB. */
+    public long matchingCount(QuerySet queries, boolean matchNbt, boolean fluids) {
+        long total = 0;
+        for (ItemSnapshot item : items) if (item.fluid() == fluids && queries.matches(item, matchNbt)) total += item.count();
+        return total;
     }
 
     public boolean overlaps(RememberedContainer other) {

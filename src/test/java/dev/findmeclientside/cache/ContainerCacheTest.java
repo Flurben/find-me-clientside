@@ -41,6 +41,14 @@ class ContainerCacheTest {
         assertEquals(1, container.matchingCount(List.of(enchanted), true));
     }
 
+    @Test void fluidsAndItemsWithTheSameIdNeverMatchEachOther() {
+        var water = new ItemSnapshot("minecraft:water", "", 16_000, true);
+        var container = chest(0, OVERWORLD, List.of(water, new ItemSnapshot("minecraft:water_bucket", "", 2)), 1);
+        assertEquals(0, container.matchingCount(List.of(new ItemSnapshot("minecraft:water", "", 1)), false));
+        assertEquals(16_000, container.matchingCount(new QuerySet(List.of(water)), false, true));
+        assertEquals(0, container.matchingCount(new QuerySet(List.of(water)), false, false));
+    }
+
     @Test void alternativeIngredientsCountEachStackOnce() {
         var container = chest(0, OVERWORLD, List.of(new ItemSnapshot("minecraft:diamond", "", 64),
                 new ItemSnapshot("minecraft:emerald", "", 7)), 1);

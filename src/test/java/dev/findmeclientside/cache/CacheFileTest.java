@@ -33,6 +33,34 @@ class CacheFileTest {
         assertFalse(Files.exists(directory.resolve("cache.json.tmp")));
     }
 
+    @Test void roundTripsFluidsAndAmountsBeyondIntRange() throws Exception {
+        Path file = directory.resolve("cache.json");
+        var network = new RememberedContainer("minecraft:overworld", "ME Terminal", "me_network",
+                List.of(new BlockAnchor(0, 64, 0, "ae2:cable_bus")),
+                List.of(new ItemSnapshot("minecraft:cobblestone", "", 9_000_000_000L),
+                        new ItemSnapshot("minecraft:water", "", 3_500_000_000L, true)), 1);
+        CacheFile.write(file, List.of(network));
+        assertEquals(List.of(network), CacheFile.read(file));
+    }
+
+    @Test void readsCachesWrittenBeforeFluidSupportAsItems() throws Exception {
+        Path file = directory.resolve("cache.json");
+        Files.writeString(file, """
+                {"version":1,"containers":[{"dimension":"minecraft:overworld","title":"Chest","kind":"block",
+                "anchors":[{"x":1,"y":64,"z":2,"blockId":"minecraft:chest"}],
+                "items":[{"itemId":"minecraft:diamond","tag":"","count":5}],"observedAt":7}]}""");
+        var item = CacheFile.read(file).get(0).items().get(0);
+        assertEquals(new ItemSnapshot("minecraft:diamond", "", 5), item);
+        assertFalse(item.fluid());
+    }
+
+    @Test void separateSuffixesKeepNetworksOutOfTheMainFile() {
+        Path main = CacheFile.forSession(directory, "local:world|player:one");
+        Path networks = CacheFile.forSession(directory, "local:world|player:one", ".networks");
+        assertNotEquals(main, networks);
+        assertTrue(networks.getFileName().toString().endsWith(".networks.json"));
+    }
+
     @Test void missingCacheIsEmptyAndCorruptOrFutureCacheIsRejected() throws Exception {
         Path file = directory.resolve("cache.json");
         assertTrue(CacheFile.read(file).isEmpty());

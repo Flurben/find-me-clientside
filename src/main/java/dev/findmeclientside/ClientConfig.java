@@ -9,6 +9,7 @@ public final class ClientConfig {
     public static final ForgeConfigSpec.BooleanValue MATCH_NBT;
     public static final ForgeConfigSpec.BooleanValue PERSIST_CACHE;
     public static final ForgeConfigSpec.BooleanValue CLOSE_SCREEN;
+    public static final ForgeConfigSpec.BooleanValue LOADED_INVENTORIES;
     public static final ForgeConfigSpec.IntValue MAX_CONTAINERS;
     public static final ForgeConfigSpec.IntValue MAX_AGE_DAYS;
     public static final ForgeConfigSpec.IntValue HUD_SCALE;
@@ -26,6 +27,9 @@ public final class ClientConfig {
                 .define("matchNbt", false);
         CLOSE_SCREEN = builder.comment("Close the inventory/recipe screen after a successful search to see the markers.")
                 .define("closeScreenOnSuccess", true);
+        LOADED_INVENTORIES = builder.comment("Also read item and fluid contents that the server syncs to clients for loaded blocks,",
+                        "such as GregTech super chests/tanks and TerraFirmaCraft barrels, without opening them first.")
+                .define("loadedInventories", true);
         builder.pop().push("cache");
         PERSIST_CACHE = builder.comment("Remember contents between sessions in game-directory/findmeclientside.",
                         "Caches are separated by server/world and player UUID. Disabling this also ignores existing files.")

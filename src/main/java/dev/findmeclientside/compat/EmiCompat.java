@@ -4,10 +4,15 @@ import dev.emi.emi.api.EmiApi;
 import dev.emi.emi.api.stack.EmiIngredient;
 import dev.emi.emi.api.stack.EmiStack;
 import dev.findmeclientside.FindMeClientside;
+import dev.findmeclientside.client.SearchQuery;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.material.Fluid;
+import net.minecraft.world.level.material.Fluids;
+import net.minecraftforge.fluids.FluidStack;
 import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.List;
 
 /** Loaded only after ModList confirms EMI is installed. Uses EMI's public API, plus reflection for EMI's own screens. */
@@ -16,11 +21,20 @@ public final class EmiCompat {
 
     public static boolean isTyping() { return EmiApi.isSearchFocused(); }
 
-    public static List<ItemStack> hovered(int x, int y) {
+    /** The hovered EMI ingredient as a query, with fluid stacks searched as fluids; null if nothing is hovered. */
+    public static SearchQuery hovered(int x, int y) {
         EmiIngredient hovered = EmiApi.getHoveredStack(x, y, true).getStack();
         if (hovered.isEmpty()) hovered = emiScreenHovered(Minecraft.getInstance().screen, x, y);
-        return hovered.getEmiStacks().stream()
-                .map(EmiStack::getItemStack).filter(stack -> !stack.isEmpty()).map(ItemStack::copy).toList();
+        List<ItemStack> items = new ArrayList<>();
+        List<FluidStack> fluids = new ArrayList<>();
+        for (EmiStack stack : hovered.getEmiStacks()) {
+            if (stack.getKey() instanceof Fluid fluid) {
+                if (fluid != Fluids.EMPTY) fluids.add(new FluidStack(fluid, 1000, stack.getNbt()));
+            } else if (!stack.getItemStack().isEmpty()) {
+                items.add(stack.getItemStack());
+            }
+        }
+        return SearchQuery.of(items, fluids, true);
     }
 
     // EMI's hover API only covers stack providers, inventory slots and its sidebars. Slots drawn inside

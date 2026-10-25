@@ -18,10 +18,13 @@ public final class CacheFile {
     private static final int VERSION = 1;
     private record Document(int version, List<RememberedContainer> containers) {}
 
-    public static Path forSession(Path directory, String session) {
+    public static Path forSession(Path directory, String session) { return forSession(directory, session, ""); }
+
+    /** A suffix keeps large, rarely changing data (AE2 networks) out of the frequently rewritten main file. */
+    public static Path forSession(Path directory, String session, String suffix) {
         try {
             byte[] hash = MessageDigest.getInstance("SHA-256").digest(session.getBytes(StandardCharsets.UTF_8));
-            return directory.resolve(HexFormat.of().formatHex(hash) + ".json");
+            return directory.resolve(HexFormat.of().formatHex(hash) + suffix + ".json");
         } catch (NoSuchAlgorithmException impossible) {
             throw new IllegalStateException(impossible);
         }
@@ -29,7 +32,8 @@ public final class CacheFile {
 
     public static List<RememberedContainer> read(Path file) throws IOException {
         if (!Files.exists(file)) return List.of();
-        if (Files.size(file) > 32L * 1024 * 1024) throw new IOException("Cache exceeds 32 MiB");
+        // Large AE2 networks can hold over 100,000 entry types.
+        if (Files.size(file) > 256L * 1024 * 1024) throw new IOException("Cache exceeds 256 MiB");
         try (var reader = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {
             Document document = GSON.fromJson(reader, Document.class);
             if (document == null || document.version != VERSION || document.containers == null) {
@@ -43,10 +47,15 @@ public final class CacheFile {
     }
 
     public static void write(Path file, List<RememberedContainer> containers) throws IOException {
+        writeJson(file, new Document(VERSION, containers));
+    }
+
+    /** Writes through a temporary file, so a crash mid-write never leaves a truncated file behind. */
+    static void writeJson(Path file, Object document) throws IOException {
         Files.createDirectories(file.getParent());
         Path temporary = file.resolveSibling(file.getFileName() + ".tmp");
         try (var writer = Files.newBufferedWriter(temporary, StandardCharsets.UTF_8)) {
-            GSON.toJson(new Document(VERSION, containers), writer);
+            GSON.toJson(document, writer);
         }
         try {
             Files.move(temporary, file, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);

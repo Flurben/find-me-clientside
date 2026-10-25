@@ -12,9 +12,10 @@ displayTest="IGNORE_ALL_VERSION"
 displayURL="https://github.com/Flurben/find-me-clientside"
 logoFile="icon.png"
 description='''
-Locate items in containers you have opened, using only information sent to your client.
-Press Y over an inventory or EMI item to highlight remembered containers.
-Works on servers without the mod. EMI is optional.
+Locate items, fluids and placed blocks using only information sent to your client.
+Press Y over an inventory, EMI or AE2 entry to highlight containers, tanks and ME networks,
+or Shift+Y to highlight where it is placed.
+Works on servers without the mod. EMI and AE2 are optional.
 '''
 
 [[dependencies.findmeclientside]]
@@ -36,4 +37,11 @@ modId="emi"
 mandatory=false
 versionRange="[1.1.0,)"
 ordering="AFTER"
+side="CLIENT"
+
+[[dependencies.findmeclientside]]
+modId="ae2"
+mandatory=false
+versionRange="[15.0.0,)"
+ordering="NONE"
 side="CLIENT"
