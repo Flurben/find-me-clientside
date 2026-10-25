@@ -9,12 +9,16 @@ import net.minecraft.client.gui.components.OptionsList;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraftforge.common.ForgeConfigSpec;
+import java.util.List;
 
 /** Opened by the Config button in the Forge mods list and in mod list replacements that reuse it. */
 public final class ConfigScreen extends Screen {
     private final Screen parent;
     private OptionsList list;
+    private List<String> preview = List.of();
 
     public ConfigScreen(Screen parent) {
         super(Component.translatable("findmeclientside.config.title"));
@@ -32,6 +36,10 @@ public final class ConfigScreen extends Screen {
                 toggle("persist", ClientConfig.PERSIST_CACHE),
                 range("maxContainers", ClientConfig.MAX_CONTAINERS),
                 range("maxAgeDays", ClientConfig.MAX_AGE_DAYS)});
+        list.addBig(percent("hudScale", ClientConfig.HUD_SCALE));
+        list.addSmall(percent("hudX", ClientConfig.HUD_X), percent("hudY", ClientConfig.HUD_Y));
+        preview = List.of(Component.translatable("findmeclientside.found",
+                new ItemStack(Items.DIAMOND).getHoverName(), 64, 3).getString());
         addWidget(list);
         addRenderableWidget(Button.builder(CommonComponents.GUI_DONE, button -> onClose())
                 .bounds(width / 2 - 100, height - 27, 200, 20).build());
@@ -43,6 +51,8 @@ public final class ConfigScreen extends Screen {
         list.render(graphics, mouseX, mouseY, partialTick);
         graphics.drawCenteredString(font, title, width / 2, 20, 0xFFFFFF);
         super.render(graphics, mouseX, mouseY, partialTick);
+        // Live preview, so the message can be placed clear of other HUD elements while dragging.
+        HighlightRenderer.panel(graphics, preview);
     }
 
     // Values are set as they change; write the file once when the screen goes away.
@@ -56,10 +66,19 @@ public final class ConfigScreen extends Screen {
         return OptionInstance.createBoolean("findmeclientside.config." + key, tooltip(value), value.get(), value::set);
     }
 
-    // Ranges and tooltips come from the spec so the screen cannot drift from ClientConfig.
     private static OptionInstance<Integer> range(String key, ForgeConfigSpec.IntValue value) {
+        return range(key, value, Options::genericValueLabel);
+    }
+
+    private static OptionInstance<Integer> percent(String key, ForgeConfigSpec.IntValue value) {
+        return range(key, value, (caption, percent) -> Options.genericValueLabel(caption, Component.literal(percent + "%")));
+    }
+
+    // Ranges and tooltips come from the spec so the screen cannot drift from ClientConfig.
+    private static OptionInstance<Integer> range(String key, ForgeConfigSpec.IntValue value,
+                                                 OptionInstance.CaptionBasedToString<Integer> label) {
         ForgeConfigSpec.Range<Integer> range = spec(value).getRange();
-        return new OptionInstance<>("findmeclientside.config." + key, tooltip(value), Options::genericValueLabel,
+        return new OptionInstance<>("findmeclientside.config." + key, tooltip(value), label,
                 new OptionInstance.IntRange(range.getMin(), range.getMax()), value.get(), value::set);
     }
 

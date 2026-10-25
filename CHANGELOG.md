@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.0.4
+
+- Reduce lag while containers are open. Open containers are re-recorded only when a slot changes,
+  instead of serializing every item's NBT each tick, and the cache file is written on a background
+  thread instead of the game thread.
+- Load large caches faster on join and update remembered containers in constant time.
+- Highlight matching item slots without serializing NBT every frame.
+- Show search results only in the compact panel; the duplicate action-bar message is gone.
+- Add message size and position options, with a live preview in the config screen.
+
 ## 1.0.3
 
 - Fix searching from inside EMI's recipe and recipe tree screens. EMI's hover API does not report

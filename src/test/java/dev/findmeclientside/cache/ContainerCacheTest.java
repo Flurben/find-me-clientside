@@ -94,6 +94,39 @@ class ContainerCacheTest {
         assertEquals(0, cache.size());
     }
 
+    @Test void removedAndEvictedContainersReleaseTheirPositions() {
+        ContainerCache cache = new ContainerCache();
+        var left = new BlockAnchor(0, 64, 0, "minecraft:chest");
+        var right = new BlockAnchor(1, 64, 0, "minecraft:chest");
+        cache.remember(new RememberedContainer(OVERWORLD, "Large Chest", "block", List.of(left, right), List.of(DIAMOND), 1));
+        cache.removeIf(c -> true);
+        // A stale index entry for the right half would make this second chest evict the first.
+        cache.remember(chest(0, OVERWORLD, List.of(DIAMOND), 2));
+        cache.remember(chest(1, OVERWORLD, List.of(DIAMOND), 3));
+        assertEquals(2, cache.size());
+        cache.remember(chest(5, OVERWORLD, List.of(DIAMOND), 4));
+        cache.prune(0, 2);
+        cache.remember(chest(1, OVERWORLD, List.of(), 5));
+        assertEquals(Set.of(1, 5), cache.entries().stream().map(c -> c.anchors().get(0).x()).collect(Collectors.toSet()));
+    }
+
+    @Test void loadingKeepsTheNewestSnapshotPerPositionAndSharesTheLatestEnderContents() {
+        ContainerCache cache = new ContainerCache();
+        var emerald = new ItemSnapshot("minecraft:emerald", "", 3);
+        var ender = new BlockAnchor(9, 64, 0, "minecraft:ender_chest");
+        var otherEnder = new BlockAnchor(9, 64, 0, "minecraft:ender_chest");
+        cache.load(List.of(
+                chest(0, OVERWORLD, List.of(emerald), 7),
+                chest(0, OVERWORLD, List.of(DIAMOND), 3),
+                new RememberedContainer(OVERWORLD, "Ender Chest", "ender_chest", List.of(ender), List.of(DIAMOND), 2),
+                new RememberedContainer("minecraft:the_nether", "Ender Chest", "ender_chest", List.of(otherEnder), List.of(emerald), 6)));
+        assertFalse(cache.isDirty());
+        assertEquals(3, cache.size());
+        assertEquals(List.of(emerald), cache.search(OVERWORLD, 0, 64, 0, 4, List.of(emerald), false).get(0).items());
+        assertTrue(cache.entries().stream().filter(c -> c.kind().equals("ender_chest"))
+                .allMatch(c -> c.items().equals(List.of(emerald)) && c.observedAt() == 6));
+    }
+
     @Test void invalidatingOneDimensionPreservesTheOther() {
         ContainerCache cache = new ContainerCache();
         cache.remember(chest(0, OVERWORLD, List.of(DIAMOND), 1));

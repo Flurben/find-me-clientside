@@ -18,12 +18,12 @@ No server installation, server plugin, Architectury, JEI, or other library mod i
 ## Install and use
 
 1. Install Forge for Minecraft **1.20.1** (Forge **47.1 or newer in the 47.x series**).
-2. Put `findmeclientside-forge-1.20.1-1.0.3.jar` from `build/libs` in your game's `mods` folder.
+2. Put `findmeclientside-forge-1.20.1-1.0.4.jar` from `build/libs` in your game's `mods` folder.
 3. Join a server or singleplayer world and **open the containers you want remembered**.
 4. Hover an inventory item or an EMI item and press **Y**. In the world, Y searches your held item
    (main hand, then offhand). The binding is configurable under Controls → Find Me Clientside.
-5. Matching containers receive cyan outlines visible through walls. The HUD shows the number of
-   remembered locations and items last seen. Open a container during the search to highlight the
+5. Matching containers receive cyan outlines visible through walls. A compact message shows how many
+   items were last seen and in how many containers; its size and position are configurable. Open a container during the search to highlight the
    backgrounds of matching item slots in cyan; the item icons and counts stay fully visible.
 
 The inventory/recipe screen closes after a successful search by default. Failed searches leave it open.
@@ -63,16 +63,19 @@ Forge's config button, such as Catalogue, open the same screen.
 | Option | Default | Purpose |
 | --- | --- | --- |
 | `search.radius` | 64 | Maximum distance in blocks (1–512) |
-| `search.highlightSeconds` | 12 | Duration of outlines, HUD, and item-slot backgrounds |
+| `search.highlightSeconds` | 12 | Duration of outlines, message, and item-slot backgrounds |
 | `search.matchNbt` | false | Require exact item NBT, including damage/enchantments |
 | `search.closeScreenOnSuccess` | true | Close inventory/recipe screens to see markers |
 | `cache.persist` | true | Load/save remembered contents between sessions |
 | `cache.maxContainers` | 4096 | Maximum remembered inventories per server/world and player |
 | `cache.maxAgeDays` | 30 | Expire old observations |
+| `hud.scale` | 100 | Message size in percent (50–200) |
+| `hud.x` | 50 | Message position: 0 = left edge, 50 = center, 100 = right edge |
+| `hud.y` | 0 | Message position: 0 = top edge, 100 = bottom edge |
 
 Persistent cache files live in `<game directory>/findmeclientside/`, with filenames hashed from the
 server address or singleplayer save path plus player UUID. Files contain container positions and
-item data in readable JSON. Changes save about every five seconds and on disconnect, using atomic
+item data in readable JSON. Changes save in the background about every five seconds and on disconnect, using atomic
 replacement where supported. Unreadable files are preserved with an `.unreadable-...` suffix.
 Disabling persistence ignores existing files; it does not erase them. Restart after changing that option.
 
@@ -94,7 +97,7 @@ Use a **JDK 17** installation and the included Gradle wrapper:
 .\gradlew.bat build
 ```
 
-The distributable, reobfuscated mod is `build/libs/findmeclientside-forge-1.20.1-1.0.3.jar`.
+The distributable, reobfuscated mod is `build/libs/findmeclientside-forge-1.20.1-1.0.4.jar`.
 ForgeGradle, Forge 47.3.0, Mixin, and EMI 1.1.24+1.20.1 are pinned for development.
 EMI is a compile-only API plus a development runtime dependency; it is **not bundled** into the mod.
 

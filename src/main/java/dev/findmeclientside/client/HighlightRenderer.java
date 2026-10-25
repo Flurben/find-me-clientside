@@ -6,7 +6,9 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import com.mojang.blaze3d.systems.RenderSystem;
+import dev.findmeclientside.ClientConfig;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -16,10 +18,12 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.client.event.RenderLevelStageEvent;
 import net.minecraftforge.client.event.ContainerScreenEvent;
+import java.util.List;
 import java.util.OptionalDouble;
 
 public final class HighlightRenderer {
     private static final MultiBufferSource.BufferSource BUFFERS = MultiBufferSource.immediate(new BufferBuilder(4096));
+    private static final int MARGIN = 4, PADDING = 3, ACCENT = 2, LINE = 10;
 
     private abstract static class Types extends RenderType {
         private Types() { super("unused", DefaultVertexFormat.POSITION_COLOR_NORMAL, VertexFormat.Mode.LINES,
@@ -53,8 +57,8 @@ public final class HighlightRenderer {
         pose.pushPose();
         VertexConsumer buffer = BUFFERS.getBuffer(Types.HIGHLIGHT);
         float pulse = 0.65f + 0.25f * (float) Math.sin(System.currentTimeMillis() / 180.0);
-        for (var container : matches.stream().limit(256).toList()) {
-            for (var anchor : container.anchors()) {
+        for (int i = 0; i < Math.min(matches.size(), 256); i++) {
+            for (var anchor : matches.get(i).anchors()) {
                 AABB box = new AABB(ContainerTracker.position(anchor)).inflate(0.015)
                         .move(-camera.x, -camera.y, -camera.z);
                 LevelRenderer.renderLineBox(pose, buffer, box, 0.15f, 0.9f, 1.0f, pulse);
@@ -80,20 +84,38 @@ public final class HighlightRenderer {
     }
 
     public static void hud(GuiGraphics graphics) {
+        if (Minecraft.getInstance().options.hideGui) return;
+        List<String> lines = SearchController.panelLines();
+        if (!lines.isEmpty()) panel(graphics, lines);
+    }
+
+    /** Draws the search panel at the configured size and position; the config screen uses it as a preview. */
+    public static void panel(GuiGraphics graphics, List<String> lines) {
         Minecraft mc = Minecraft.getInstance();
-        if (!SearchController.visible() || mc.options.hideGui) return;
-        int available = Math.min(700, mc.getWindow().getGuiScaledWidth() - 24);
-        if (available < 40) return;
-        String title = mc.font.plainSubstrByWidth(SearchController.message().getString(), available);
-        String detail = mc.font.plainSubstrByWidth(SearchController.detail().getString(), available);
-        int width = Math.max(mc.font.width(title), mc.font.width(detail));
-        int left = (mc.getWindow().getGuiScaledWidth() - width) / 2;
+        Font font = mc.font;
+        float scale = ClientConfig.HUD_SCALE.get() / 100f;
+        int screenWidth = mc.getWindow().getGuiScaledWidth();
+        int screenHeight = mc.getWindow().getGuiScaledHeight();
+        int maxText = (int) ((screenWidth - 2 * MARGIN) / scale) - ACCENT - 2 * PADDING;
+        if (maxText < 40) return;
+        int textWidth = 0;
+        for (String line : lines) textWidth = Math.max(textWidth, Math.min(maxText, font.width(line)));
+        int width = ACCENT + 2 * PADDING + textWidth;
+        // Glyphs are 8px tall inside a 9px line; drop the trailing blank row so padding looks even.
+        int height = 2 * PADDING + lines.size() * LINE - 2;
+        // 0% puts the panel against the left/top margin and 100% against the right/bottom one.
+        int left = Math.round(MARGIN + (screenWidth - 2 * MARGIN - width * scale) * ClientConfig.HUD_X.get() / 100f);
+        int top = Math.round(MARGIN + (screenHeight - 2 * MARGIN - height * scale) * ClientConfig.HUD_Y.get() / 100f);
         graphics.pose().pushPose();
-        graphics.pose().translate(0, 0, 400);
-        graphics.fill(left - 7, 7, left + width + 7, 37, 0xCC101820);
-        graphics.fill(left - 7, 7, left - 5, 37, 0xFF42DBEF);
-        graphics.drawString(mc.font, title, left, 12, 0xFF67E8F9, false);
-        graphics.drawString(mc.font, detail, left, 24, 0xFFE2E8F0, false);
+        graphics.pose().translate(left, top, 400);
+        graphics.pose().scale(scale, scale, 1);
+        graphics.fill(0, 0, width, height, 0xCC101820);
+        graphics.fill(0, 0, ACCENT, height, 0xFF42DBEF);
+        for (int i = 0; i < lines.size(); i++) {
+            String line = lines.get(i);
+            if (font.width(line) > maxText) line = font.plainSubstrByWidth(line, maxText);
+            graphics.drawString(font, line, ACCENT + PADDING, PADDING + i * LINE, i == 0 ? 0xFF67E8F9 : 0xFFB4C0CC, false);
+        }
         graphics.pose().popPose();
     }
 

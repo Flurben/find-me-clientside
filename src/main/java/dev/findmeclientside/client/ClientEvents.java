@@ -72,7 +72,7 @@ public final class ClientEvents {
                 ItemStack held = mc.player.getMainHandItem();
                 if (held.isEmpty()) held = mc.player.getOffhandItem();
                 if (!held.isEmpty()) SearchController.search(List.of(held));
-                else mc.player.displayClientMessage(Component.translatable("findmeclientside.select_item"), true);
+                else SearchController.notice(Component.translatable("findmeclientside.select_item"));
             }
         }
         while (CLEAR.consumeClick()) if (mc.screen == null) SearchController.clear();

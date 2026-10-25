@@ -11,6 +11,9 @@ public final class ClientConfig {
     public static final ForgeConfigSpec.BooleanValue CLOSE_SCREEN;
     public static final ForgeConfigSpec.IntValue MAX_CONTAINERS;
     public static final ForgeConfigSpec.IntValue MAX_AGE_DAYS;
+    public static final ForgeConfigSpec.IntValue HUD_SCALE;
+    public static final ForgeConfigSpec.IntValue HUD_X;
+    public static final ForgeConfigSpec.IntValue HUD_Y;
 
     static {
         ForgeConfigSpec.Builder builder = new ForgeConfigSpec.Builder();
@@ -31,6 +34,13 @@ public final class ClientConfig {
                 .defineInRange("maxContainers", 4096, 64, 32768);
         MAX_AGE_DAYS = builder.comment("Discard containers not opened for this many days.")
                 .defineInRange("maxAgeDays", 30, 1, 365);
+        builder.pop().push("hud");
+        HUD_SCALE = builder.comment("Size of the search message, as a percentage of normal GUI text.")
+                .defineInRange("scale", 100, 50, 200);
+        HUD_X = builder.comment("Horizontal position of the search message: 0 is the left edge, 50 the center, 100 the right edge.")
+                .defineInRange("x", 50, 0, 100);
+        HUD_Y = builder.comment("Vertical position of the search message: 0 is the top edge, 100 the bottom edge.")
+                .defineInRange("y", 0, 0, 100);
         builder.pop();
         SPEC = builder.build();
     }

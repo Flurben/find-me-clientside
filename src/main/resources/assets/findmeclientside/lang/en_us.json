@@ -2,10 +2,10 @@
   "key.categories.findmeclientside": "Find Me Clientside",
   "key.findmeclientside.search": "Find hovered / held item",
   "key.findmeclientside.clear": "Clear search highlights",
-  "findmeclientside.found": "%s: %s remembered locations, %s items last seen",
+  "findmeclientside.found": "%s ×%s in %s containers",
+  "findmeclientside.found_one": "%s ×%s in 1 container",
   "findmeclientside.no_matches": "No remembered %s within %s blocks",
-  "findmeclientside.hint": "Open containers first to remember them. Contents may change while closed.",
-  "findmeclientside.slot_hint": "Open a container to highlight matching item slots.",
+  "findmeclientside.hint": "Open containers to remember them. Contents may change while closed.",
   "findmeclientside.alternatives": "any of %s items",
   "findmeclientside.select_item": "Hold an item, or hover an inventory / EMI item and press your Find key.",
   "findmeclientside.command_help": "Find Me Clientside: /findmeclient stats | /findmeclient clear (erase this world's cache)",
@@ -18,5 +18,8 @@
   "findmeclientside.config.closeScreenOnSuccess": "Close screen on find",
   "findmeclientside.config.persist": "Save to disk",
   "findmeclientside.config.maxContainers": "Max containers",
-  "findmeclientside.config.maxAgeDays": "Forget after days"
+  "findmeclientside.config.maxAgeDays": "Forget after days",
+  "findmeclientside.config.hudScale": "Message size",
+  "findmeclientside.config.hudX": "Message X",
+  "findmeclientside.config.hudY": "Message Y"
 }

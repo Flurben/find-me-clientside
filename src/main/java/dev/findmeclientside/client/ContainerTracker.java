@@ -9,11 +9,17 @@ import dev.findmeclientside.cache.ItemSnapshot;
 import dev.findmeclientside.cache.RememberedContainer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.multiplayer.ClientPacketListener;
+import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.ChestBlock;
 import net.minecraft.world.level.block.EnderChestBlock;
 import net.minecraft.world.level.block.state.BlockState;
@@ -27,17 +33,37 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 public final class ContainerTracker {
     public static final ContainerTracker INSTANCE = new ContainerTracker();
+    // Cache files can reach megabytes. Write them off the render thread, one at a time and in order.
+    private static final ExecutorService WRITER = Executors.newSingleThreadExecutor(task -> {
+        Thread thread = new Thread(task, "Find Me Clientside cache writer");
+        thread.setDaemon(true);
+        return thread;
+    });
+    private static ResourceKey<Level> dimensionKey;
+    private static String dimensionId;
     private final ContainerCache cache = new ContainerCache();
     private String session;
+    private ClientPacketListener sessionConnection;
+    private LocalPlayer sessionPlayer;
     private Path file;
     private Pending pending;
     private Active active;
     private RememberedContainer lastSnapshot;
+    private ItemStack[] seenStacks = new ItemStack[0];
+    private CompoundTag[] seenTags = new CompoundTag[0];
+    private int[] seenCounts = new int[0];
     private long lastSave;
+    private Future<?> lastWrite = CompletableFuture.completedFuture(null);
+    private volatile Path failedWrite;
     private record Pending(String dimension, List<BlockAnchor> anchors, String kind, long clickedAt) {}
     private record Active(AbstractContainerMenu menu, Pending target, String title) {}
 
@@ -68,6 +94,7 @@ public final class ContainerTracker {
         if (mc.player == null || mc.level == null || menu == mc.player.inventoryMenu
                 || menu != mc.player.containerMenu || !ensureSession()) return;
         if (active != null && active.menu == menu) {
+            slotsChanged();
             snapshot();
             return;
         }
@@ -79,6 +106,8 @@ public final class ContainerTracker {
         active = new Active(menu, pending, title);
         lastSnapshot = null;
         pending = null;
+        seenStacks = new ItemStack[0];
+        slotsChanged();
         // This hook runs only after the server's initial contents have arrived, including empty containers.
         snapshot();
     }
@@ -93,13 +122,38 @@ public final class ContainerTracker {
             } else if (mc.player.containerMenu != active.menu) {
                 snapshot();
                 active = null;
-            } else {
+            } else if (slotsChanged()) {
                 snapshot();
             }
         }
         if (pending != null && (System.currentTimeMillis() - pending.clickedAt > 5000
                 || !pending.dimension.equals(dimension()))) pending = null;
-        if (System.currentTimeMillis() - lastSave >= 5000) save();
+        if (System.currentTimeMillis() - lastSave >= 5000) save(false);
+    }
+
+    // Runs every tick, so it compares slot references instead of serializing item NBT. Server updates
+    // and clicks replace stacks, counts or tags; an NBT edit made in place is still recorded by the
+    // full snapshot taken on close, on search and on disconnect.
+    private boolean slotsChanged() {
+        List<Slot> slots = active.menu.slots;
+        if (seenStacks.length != slots.size()) {
+            seenStacks = new ItemStack[slots.size()];
+            seenTags = new CompoundTag[slots.size()];
+            seenCounts = new int[slots.size()];
+        }
+        boolean changed = false;
+        for (int i = 0; i < slots.size(); i++) {
+            Slot slot = slots.get(i);
+            if (slot.container instanceof Inventory) continue;
+            ItemStack stack = slot.getItem();
+            if (stack != seenStacks[i] || stack.getCount() != seenCounts[i] || stack.getTag() != seenTags[i]) {
+                seenStacks[i] = stack;
+                seenTags[i] = stack.getTag();
+                seenCounts[i] = stack.getCount();
+                changed = true;
+            }
+        }
+        return changed;
     }
 
     public void snapshot() {
@@ -156,18 +210,21 @@ public final class ContainerTracker {
         active = null;
         pending = null;
         cache.clear();
-        save();
+        save(false);
         SearchController.clear();
     }
 
     public void disconnect() {
         snapshot();
-        save();
+        // Wait here so quitting the game cannot cut off the final write.
+        save(true);
         active = null;
         pending = null;
         cache.clear();
         cache.markSaved();
         session = null;
+        sessionConnection = null;
+        sessionPlayer = null;
         file = null;
         SearchController.clear();
     }
@@ -175,6 +232,8 @@ public final class ContainerTracker {
     private boolean ensureSession() {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) return false;
+        // The identity only changes with a new connection or player, so skip rebuilding it every tick.
+        if (session != null && mc.getConnection() == sessionConnection && mc.player == sessionPlayer) return true;
         String identity;
         if (mc.getSingleplayerServer() != null) {
             identity = "local:" + mc.getSingleplayerServer().getWorldPath(LevelResource.ROOT).toAbsolutePath().normalize();
@@ -184,8 +243,10 @@ public final class ContainerTracker {
             identity = "connection:" + mc.getConnection().getConnection().getRemoteAddress();
         } else return false;
         String nextSession = identity + "|player:" + mc.player.getUUID();
+        sessionConnection = mc.getConnection();
+        sessionPlayer = mc.player;
         if (nextSession.equals(session)) return true;
-        save();
+        save(false);
         active = null;
         pending = null;
         cache.clear();
@@ -194,6 +255,7 @@ public final class ContainerTracker {
         session = nextSession;
         file = CacheFile.forSession(mc.gameDirectory.toPath().resolve("findmeclientside"), session);
         if (ClientConfig.PERSIST_CACHE.get()) {
+            awaitWrite();
             try {
                 cache.load(CacheFile.read(file));
             } catch (IOException failure) {
@@ -218,19 +280,47 @@ public final class ContainerTracker {
                 ClientConfig.MAX_CONTAINERS.get());
     }
 
-    private void save() {
+    private void save(boolean wait) {
         lastSave = System.currentTimeMillis();
-        if (file == null || !cache.isDirty() || !ClientConfig.PERSIST_CACHE.get()) return;
-        prune();
-        try {
-            CacheFile.write(file, cache.entries());
+        boolean retry = file != null && file.equals(failedWrite);
+        if (file != null && (cache.isDirty() || retry) && ClientConfig.PERSIST_CACHE.get()) {
+            prune();
+            // Entries are immutable records, so the copy can be serialized safely on the writer thread.
+            Path target = file;
+            List<RememberedContainer> entries = cache.entries();
             cache.markSaved();
-        } catch (IOException failure) {
-            FindMeClientside.LOGGER.warn("Could not save container cache {}", file, failure);
+            failedWrite = null;
+            lastWrite = WRITER.submit(() -> {
+                try {
+                    CacheFile.write(target, entries);
+                } catch (IOException failure) {
+                    failedWrite = target;
+                    FindMeClientside.LOGGER.warn("Could not save container cache {}", target, failure);
+                }
+            });
+        }
+        if (wait) awaitWrite();
+    }
+
+    private void awaitWrite() {
+        try {
+            lastWrite.get();
+        } catch (InterruptedException interrupted) {
+            Thread.currentThread().interrupt();
+        } catch (ExecutionException failure) {
+            FindMeClientside.LOGGER.warn("Container cache writer failed", failure);
         }
     }
 
-    public static String dimension() { return Minecraft.getInstance().level.dimension().location().toString(); }
+    public static String dimension() {
+        // A dimension's key is interned, so build its ID string only when the dimension changes.
+        ResourceKey<Level> key = Minecraft.getInstance().level.dimension();
+        if (key != dimensionKey) {
+            dimensionKey = key;
+            dimensionId = key.location().toString();
+        }
+        return dimensionId;
+    }
     public static BlockPos position(BlockAnchor a) { return new BlockPos(a.x(), a.y(), a.z()); }
     private static BlockAnchor anchor(BlockPos pos, BlockState state) {
         return new BlockAnchor(pos.getX(), pos.getY(), pos.getZ(), BuiltInRegistries.BLOCK.getKey(state.getBlock()).toString());
