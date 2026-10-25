@@ -2,7 +2,7 @@
 
 Use Java 17 and the included Gradle wrapper. Run `./gradlew build` (or `gradlew.bat build` on Windows)
 before submitting a change. Start the development client with `runClient`; use `-PwithoutEmi` to
-check the optional-integration path. See [TESTING.md](TESTING.md) for gameplay checks.
+check the optional-integration path.
 
 Changes must preserve the client-only design: no required server installation, custom server search
 packets, or assumptions that unopened inventories are available. Keep player inventory slots out of

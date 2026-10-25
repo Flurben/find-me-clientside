@@ -10,5 +10,13 @@
   "findmeclientside.select_item": "Hold an item, or hover an inventory / EMI item and press your Find key.",
   "findmeclientside.command_help": "Find Me Clientside: /findmeclient stats | /findmeclient clear (erase this world's cache)",
   "findmeclientside.stats": "Remembered containers: %s · integration: %s · radius: %s blocks",
-  "findmeclientside.cleared": "Cleared this server / world's remembered containers. Reopen containers to remember them."
+  "findmeclientside.cleared": "Cleared this server / world's remembered containers. Reopen containers to remember them.",
+  "findmeclientside.config.title": "Find Me Clientside Settings",
+  "findmeclientside.config.radius": "Search radius",
+  "findmeclientside.config.highlightSeconds": "Highlight seconds",
+  "findmeclientside.config.matchNbt": "Exact NBT",
+  "findmeclientside.config.closeScreenOnSuccess": "Close screen on find",
+  "findmeclientside.config.persist": "Save to disk",
+  "findmeclientside.config.maxContainers": "Max containers",
+  "findmeclientside.config.maxAgeDays": "Forget after days"
 }

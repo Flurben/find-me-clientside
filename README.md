@@ -11,10 +11,14 @@ No server installation, server plugin, Architectury, JEI, or other library mod i
 [Report a bug](https://github.com/Flurben/find-me-clientside/issues) ·
 [AI disclosure](AI_DISCLOSURE.md)
 
+<img src="assets/screenshots/container-outlines.png" alt="Cyan outlines around remembered barrels" width="32%" />
+<img src="assets/screenshots/through-walls.png" alt="Outlines visible through a wall" width="32%" />
+<img src="assets/screenshots/matching-item-backgrounds.png" alt="Matching item slots highlighted in an open barrel" width="32%" />
+
 ## Install and use
 
 1. Install Forge for Minecraft **1.20.1** (Forge **47.1 or newer in the 47.x series**).
-2. Put `findmeclientside-forge-1.20.1-1.0.2.jar` from `build/libs` in your game's `mods` folder.
+2. Put `findmeclientside-forge-1.20.1-1.0.3.jar` from `build/libs` in your game's `mods` folder.
 3. Join a server or singleplayer world and **open the containers you want remembered**.
 4. Hover an inventory item or an EMI item and press **Y**. In the world, Y searches your held item
    (main hand, then offhand). The binding is configurable under Controls → Find Me Clientside.
@@ -24,8 +28,8 @@ No server installation, server plugin, Architectury, JEI, or other library mod i
 
 The inventory/recipe screen closes after a successful search by default. Failed searches leave it open.
 Typing into the EMI search box or a vanilla text field does not trigger a search.
-EMI item-list, favorite, recipe, and ingredient hovers use EMI's public API. Multi-item ingredients
-search all item alternatives. Fluid-only ingredients are not searchable.
+EMI item-list, favorite, recipe, and ingredient hovers work, including slots inside EMI's recipe
+and recipe tree screens. Multi-item ingredients search all item alternatives. Fluid-only ingredients are not searchable.
 
 ### The client-only limit
 
@@ -52,7 +56,9 @@ are kept separate.
 
 ## Configuration and cache
 
-The first launch creates `config/findmeclientside-client.toml` in the game directory.
+The first launch creates `config/findmeclientside-client.toml` in the game directory. The same
+options can be changed in game: **Mods → Find Me Clientside → Config**. Mod list replacements that use
+Forge's config button, such as Catalogue, open the same screen.
 
 | Option | Default | Purpose |
 | --- | --- | --- |
@@ -78,8 +84,7 @@ Client commands (handled locally):
 You can assign a separate **Clear search highlights** key in Controls. It removes outlines and item-slot
 backgrounds. Slot backgrounds apply to the container's own slots, update as items move, and use the
 same NBT setting and EMI item alternatives as the search. A new search replaces the highlighted item;
-expiry, clearing, a dimension change, or disconnect removes the highlights. Version 1.0.2 removes the
-old `search.showTracer` option.
+expiry, clearing, a dimension change, or disconnect removes the highlights.
 
 ## Build
 
@@ -89,7 +94,7 @@ Use a **JDK 17** installation and the included Gradle wrapper:
 .\gradlew.bat build
 ```
 
-The distributable, reobfuscated mod is `build/libs/findmeclientside-forge-1.20.1-1.0.2.jar`.
+The distributable, reobfuscated mod is `build/libs/findmeclientside-forge-1.20.1-1.0.3.jar`.
 ForgeGradle, Forge 47.3.0, Mixin, and EMI 1.1.24+1.20.1 are pinned for development.
 EMI is a compile-only API plus a development runtime dependency; it is **not bundled** into the mod.
 
@@ -105,10 +110,7 @@ Client ticks refresh the observed menu while it is open. No custom networking ch
 request packet is registered. The mod accepts servers that do not advertise it and initializes no
 client handlers on a dedicated server. Marker rendering is capped at 256 locations per search.
 Outlines render during Forge's `AFTER_PARTICLES` stage with the world camera transform and the
-particles render target, including Fabulous graphics. Version 1.0.1 fixes the misplaced outlines
-caused by using the projection stack supplied at `AFTER_LEVEL` in Forge 1.20.1.
-
-See [TESTING.md](TESTING.md) for the in-game test checklist and the limitations of automated checks.
+particles render target, including Fabulous graphics.
 
 ## Credits and license
 
@@ -118,5 +120,3 @@ The Gradle wrapper retains its own Apache 2.0 notices.
 The package-search icon is from Lucide under ISC; see [third-party notices](THIRD_PARTY_NOTICES.md).
 Maintained by [Flurben](https://github.com/Flurben). The code and documentation were substantially
 generated with Codex; see [AI_DISCLOSURE.md](AI_DISCLOSURE.md).
-
-Release preparation and the unlisted Modrinth package are documented in [publishing/README.md](publishing/README.md).

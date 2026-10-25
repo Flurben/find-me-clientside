@@ -1,1 +1,0 @@
-Find items in containers you've opened. Client-only storage search with cyan outlines, item-slot highlights, and optional EMI support for Forge 1.20.1.

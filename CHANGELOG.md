@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.3
+
+- Fix searching from inside EMI's recipe and recipe tree screens. EMI's hover API does not report
+  slots drawn by its own screens, so the hovered recipe slot is now read from those screens directly.
+- Add an in-game config screen, opened from the Config button in the Forge mods list
+  (and mod list replacements such as Catalogue that reuse it).
+
 ## 1.0.2
 
 - Highlight the backgrounds of matching item slots when opening a container during an active search.

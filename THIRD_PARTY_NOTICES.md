@@ -18,4 +18,4 @@ See [asset provenance](assets/branding/PROVENANCE.md) for the pinned source.
 The Gradle wrapper scripts and JAR retain their Apache-2.0 license notices.
 Forge, Minecraft, Mixin, EMI, and test libraries are build/runtime dependencies and are not
 redistributed inside the mod JAR. Minecraft gameplay imagery belongs to its respective rights holders;
-gallery screenshots document this mod's behavior and are not offered as independently relicensed game art.
+screenshots document this mod's behavior and are not offered as independently relicensed game art.

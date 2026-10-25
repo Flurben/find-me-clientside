@@ -13,18 +13,20 @@ jobs:
           distribution: temurin
           java-version: '17'
       - uses: gradle/actions/setup-gradle@v4
-      - name: Assemble release package
-        shell: pwsh
+      - name: Build and test
         run: |
           chmod +x gradlew
-          ./scripts/Build-Release.ps1
+          ./gradlew --no-daemon --console=plain build
       - name: Create draft beta release
         env:
           GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
           VERSION=$(sed -n 's/^mod_version=//p' gradle.properties | tr -d '\r')
-          gh release create "v${VERSION}" build/libs/*.jar dist/*.zip dist/SHA256SUMS.txt \
+          # Release notes are this version's section of CHANGELOG.md.
+          awk -v heading="## ${VERSION}" '$0 == heading {found = 1; next} /^## / {found = 0} found' \
+            CHANGELOG.md > release-notes.md
+          gh release create "v${VERSION}" build/libs/*.jar \
             --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --draft --prerelease \
             --title "Find Me Clientside ${VERSION} - Forge 1.20.1" \
-            --notes-file publishing/release-notes.md
+            --notes-file release-notes.md
